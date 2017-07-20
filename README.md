@@ -1,13 +1,12 @@
-Multithreaded Messenger in Java
+# Multithreaded Messenger in Java
+The goal of this project is to create a scalable messaging application that allows users to connect and message any other user on the server
 
-Goal: Create a scalable messaging application that allows users to connect and message any other user on the server
-
-How to Run:
+## How to Run:
 - Ensure config.txt is in the current directory with the correct information
-- On the server, compile server.java and run the jar file with java -jar Server.jar
-- On the client, compile client.java and run the jar file with java -jar Client.jar and follow prompts to message currently active users
+- On the server, compile server.java and run the jar file with '''java -jar Server.jar'''
+- On the client, compile client.java and run the jar file with '''java -jar Client.jar''' and follow prompts to message currently active users
 
-Design:
+# Design:
 
 This application is designed to be scalable and reliable by using threading and TCP sockets, while also achieving optimal performance with the use of efficient data structures and design patterns. The server checks a configuration file to determine the number of ports that can be allocated for use and the amount of threads to spawn to handle tasks. The client is configured with the server's IP address to connect to. These configuration files can be used to extend functionality and add other features.
 
@@ -15,7 +14,7 @@ On the server, a hashtable of <String,ClientHandler> will be initialized, where 
 
 The client will have a simple text-based UI, which the user can interact with to find users and send messages. Only one client may connect to the server per computer. There will be a thread to constantly check for data on the socket and alert any observers when this event occurs. This Observer design pattern makes it simpler to update the "View", informing the user if there is any incoming messages. This simple UI can be expanded into a full-fledged GUI in the future.
 
-Program Flow:
+# Program Flow:
 
 Clients will first connect by sending a UDP message to the server. The server will respond with the TCP port number to connect to. This simple UDP connect protocol will help balance the load (can be amongst multiple servers) and keep a cap on the amount of clients connecting.
 
@@ -29,7 +28,7 @@ Once the client gets feedback (ok or error) from the server, it lets the user se
 
 Any messages received will be shown on the console, along with the sender. Once finished, the client can quit with "/q" and a Disconnect message will be sent to the server, so the resources can be deallocated. 
 
-Future Work:
+# Future Work:
 
 While the messaging application is able to reliably send a message, security is still an issue. Encrypting messages using asymmetric encryption can secure the simple protocol from attackers sniffing on the network.
 
@@ -39,7 +38,7 @@ Adding precise logging on the server end to make application fault tolerant.
 
 Using Natural Language Processing, a chatbot application can be made to talk to the user (in case they have no friends), similar to the help bot on Slack. This can be easily accomplished by adding another client as the chatbot on the server.
 
-Accomplishments:
+# Accomplishments:
 
 - Creating a multi-threaded, scalable messaging protocol in Java. 
 - Using both UDP sockets for speed and TCP sockets for reliability
