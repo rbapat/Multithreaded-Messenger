@@ -16,20 +16,32 @@ import java.util.Observer;
 import Shared.Message;
 import Shared.UDPMessage;
 
+/*
+ * Class to interface with the user and send user input to the server
+ * 
+ * @author Rohan Bapat
+ * @version 1.0
+ * @since 06/15/17
+ */
+
 public class Client {
 	private DatagramSocket udpSocket;
 	private UDPMessage message;
-	private BufferedReader stdIn;
-	private BufferedReader socketIn;
+	private BufferedReader stdIn, socketIn;
 	private PrintWriter socketOut;
 	private Socket clientSocket;
-	private String name;
+	private String name, hostAddress;
 	private StdInEvent stdInEvent;
 	private SocketInEvent socketInEvent;
-	private String hostAddress;
 	private BufferedReader fileIO;
 		
-
+	/*
+	 * initializes UDP socket and message, input/output streams to socket, and config file reader
+	 *
+	 * @param udpPort
+	 *	port to connect udp socket to
+	 *
+	 */
 	public Client(int udpPort) throws IOException {
 		udpSocket = new DatagramSocket();		
 		stdIn = new BufferedReader(new InputStreamReader(System.in));
@@ -40,9 +52,13 @@ public class Client {
 		message = new UDPMessage(hostAddress, udpPort);
 	}
 	
+	/*
+	 * retrieves config info from config file
+	 *
+	 * @return server address string
+	 */
 	private String parseData() throws IOException {
-		String s;
-		String ret = "";
+		String s, ret = "";
 		while((s = fileIO.readLine()) != null) {
 			String[] data = s.split(":");
 			if(data[0].equals("serverAddr"))
@@ -51,16 +67,28 @@ public class Client {
 		
 		return ret;
 	}
-	
+	/*
+	 * intitializes and connects to TCP socket and sets up input/output streams
+	 *
+	 * @param port
+	 *	port to connect TCP socket to
+	 *
+	 */
 	public void connectTCP(int port) throws IOException {
-		//System.out.println("Attempting to connect to " + hostAddress + " at " + port);
 		clientSocket = new Socket(hostAddress, port);
 		socketIn = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 		socketOut = new PrintWriter(clientSocket.getOutputStream(), true);
 		socketInEvent = new SocketInEvent(socketIn);
-		//System.out.println("Successfully connected to " + clientSocket.toString());
 	}
 	
+	/*
+	 * requests an open TCP port from server via 
+	 *
+	 * @param port
+	 *	port to connect TCP socket to
+	 *
+	 * @return integer of requested TCP port
+	 */
 	public int requestPort() throws IOException {
 		message.setMessage("request_connection#");
 		udpSocket.send(message.getPacket());
@@ -69,7 +97,10 @@ public class Client {
 		udpSocket.close();
 		return Integer.parseInt(response[0]);
 	}
-
+	
+	/*
+	 * prompts user to enter name 
+	 */
 	public void promptName() throws IOException {
 		boolean valid = false;
 		String request = socketIn.readLine();
@@ -85,7 +116,12 @@ public class Client {
 		socketOut.println(name);
 		System.out.println("\nWelcome, " + name);
 	}
-
+	/*
+	 * executes a given console command
+	 *
+	 * @param command
+	 *	string with command to execute
+	 */
 	private void command(String command) throws IOException {
 		if (command.equals("quit") || command.equals("q")) {
 			socketOut.println("/q");
@@ -99,8 +135,8 @@ public class Client {
 		} else if (command.equals("users") || command.equals("u")) {
 			socketOut.println("/u");
 		} else if (command.equals("clear") || command.equals("c")) {
-			for (int x = 0; x < 25; x++)
-				System.out.println();
+			System.out.print("\033[H\033[2J");  //will maybe work, havent tested
+    			System.out.flush();  
 		} else if (command.equals("help") || command.equals("h")) {
 			System.out.println("\nTo message someone, type \"message <user> <message>\"");
 			System.out.println("The current commands are:");
@@ -110,7 +146,9 @@ public class Client {
 			System.out.println("/u or /users\tlists all online users");
 		}
 	}
-
+	/*
+	 * prints all online users
+	 */
 	public void printCurrentUsers() throws IOException {
 		String[] users = socketIn.readLine().split("#");
 		System.out.print("Online users: ");
@@ -119,10 +157,18 @@ public class Client {
 		}
 		System.out.println("\n");
 	}
-
+	
+	/*
+	 * main loop of client implemented in an observer pattern
+	 * creates two respective threads for each input/output event
+	 */
 	public void clientMain() throws IOException, InterruptedException {
 
 		stdInEvent.addObserver(new Observer() {
+			/*
+			 * update function for input observer
+			 * gets input from user and sends it to server
+			 */
 			public void update(Observable obj, Object input) {
 				try {
 					String data = input.toString();
@@ -145,6 +191,10 @@ public class Client {
 		});
 
 		socketInEvent.addObserver(new Observer() {
+			/*
+			 * update function for output observer
+			 * gets payload from server and prints it to console
+			 */
 			public void update(Observable obj, Object input) {
 				if (input.toString().startsWith("/u")) {
 					try {
@@ -172,7 +222,11 @@ public class Client {
 		stdInThread.join();
 		socketInThread.join();
 	}
-
+	
+	/*
+	* entry point for client
+	* attempts to connect to TCP port, retrieves username and prints users, and begin observer threads
+	*/
 	public static void main(String[] args) {
 		try {
 			Client client = new Client(8888);
