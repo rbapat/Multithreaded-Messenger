@@ -12,6 +12,15 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 
 import Shared.Message;
 
+/*
+ * Class that runs as its own thread to interact with the client
+ * takes user input and sends it to server
+ * 
+ * @author Rohan Bapat
+ * @version 1.0
+ * @since 06-15-17
+ */
+
 public class ClientHandler implements Runnable {
 
 	private ServerSocket server;
@@ -22,7 +31,19 @@ public class ClientHandler implements Runnable {
 	private ConcurrentLinkedDeque<Message> messageQueue;
 	private String name;
 	private int port;
-
+	
+	/*
+	 * instantiates and connects to server socket
+	 * sets up input and output streams to client socket
+	 * received initial user input and starts thread
+	 *	 
+	 * @param clients
+	 *	thread-safe ConcurrentHashMap that maps a clients username to their respective ClientHandler object. Dispatch thread uses this to retreive clients
+	 * @param messageQueue
+	 *	thread-safe ConcurrentLinkedDeque of Messages. The dispatch thread send messages that are stored here to a client
+	 * @param
+	 *	integer which represents which TCP Server port to connect to
+	 */
 	public ClientHandler(ConcurrentHashMap<String, ClientHandler> clients, ConcurrentLinkedDeque<Message> messageQueue, int port) {
 		try {
 			this.clients = clients;
@@ -39,12 +60,21 @@ public class ClientHandler implements Runnable {
 		}
 		new Thread(this).start();
 	}
-
+	/*
+	 * wrapper that prompts user for their name
+	 * 
+	 * @return String of name given by client
+	 */
 	private String promptName() throws IOException {
 		send("What is your name?");
 		return recv();
 	}
-
+	
+	/*
+	 * retreives names of all users from ConcurrentHashMap
+	 * 
+	 * @return String of names of all cients
+	 */
 	private String getCurrentUsers() {
 		String users = "";
 		Set<String> userSet = clients.keySet();
@@ -52,20 +82,40 @@ public class ClientHandler implements Runnable {
 			users += (user + "#");
 		return users;
 	}
-
+	
+	/*
+	 * retreives name of client
+	 * 
+	 * @return String of name of client
+	 */
 	public String getName() {
 		return name;
 	}
-
+	
+	/*
+	 * wrapper to send data to client socket
+	 * @param
+	 * 	String to send to client
+	 */
 	public void send(String payload) {
 		socketOut.println(payload);
 	}
-
+	
+	/*
+	 * wrapper to receive data from client socket
+	 *
+	 * @return data received from client
+	 */
 	public String recv() throws IOException {
 		return socketIn.readLine();
 
 	}
-
+	
+	/*
+	 * handles user commands
+	 * @param
+	 * 	String of command to execute
+	 */
 	private void command(String command) throws IOException {
 		if (command.equals("u")) {
 			socketOut.println("/u");
@@ -78,7 +128,10 @@ public class ClientHandler implements Runnable {
 			throw new IOException();
 		}
 	}
-
+	
+	/*
+	 * Main loop of thread, handles user input and pushes it to dispatch queue
+	 */
 	public void run() {
 		while (true) {
 			try {
